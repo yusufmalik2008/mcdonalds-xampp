@@ -1,0 +1,11 @@
+{
+  "name": "mcdonalds-order-app",
+  "version": "1.0.0",
+  "scripts": {
+    "build-css": "npx tailwindcss -i ./src/public/assets/css/input.css -o ./src/public/assets/css/output.css --minify",
+    "watch-css": "npx tailwindcss -i ./src/public/assets/css/input.css -o ./src/public/assets/css/output.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0"
+  }
+}

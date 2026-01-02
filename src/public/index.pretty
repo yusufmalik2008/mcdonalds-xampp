@@ -1,0 +1,215 @@
+<?php
+//session_start();
+require '../includes/db.php';
+require '../includes/auth.php';
+
+// Fetch all menu items
+$stmt = $pdo->query("CALL GetMenuItems()");
+$allItems = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$grouped = [];
+foreach ($allItems as $item) {
+    $grouped[$item['category']][] = $item;
+}
+?>
+
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>McDonald's Menu</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet"/>
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Tailwind Config -->
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#f20d0d",
+                        "secondary": "#ffc72c",
+                        "background-light": "#f8f5f5",
+                        "background-dark": "#18181b",
+                        "card-light": "#ffffff",
+                        "card-dark": "#27272a",
+                        "text-main-light": "#181111",
+                        "text-main-dark": "#ffffff",
+                        "text-sub-light": "#8a6060",
+                        "text-sub-dark": "#a1a1aa",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"],
+                        "body": ["Noto Sans", "sans-serif"],
+                    },
+                    borderRadius: {
+                        "DEFAULT": "1rem",
+                        "lg": "1.5rem",
+                        "xl": "2rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        body { font-family: "Plus Jakarta Sans", sans-serif; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-text-main-light dark:text-text-main-dark min-h-screen flex flex-col transition-colors duration-200">
+
+<!-- Top Navigation -->
+<header class="sticky top-0 z-50 bg-white dark:bg-card-dark border-b border-[#f5f0f0] dark:border-zinc-700 shadow-sm">
+    <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-20 gap-4">
+            <!-- Logo -->
+            <div class="flex items-center gap-2 shrink-0">
+                <div class="size-8 text-primary">
+                    <svg class="h-full w-full" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M24 45.8096C19.6865 45.8096 15.4698 44.5305 11.8832 42.134C8.29667 39.7376 5.50128 36.3314 3.85056 32.3462C2.19985 28.361 1.76794 23.9758 2.60947 19.7452C3.451 15.5145 5.52816 11.6284 8.57829 8.5783C11.6284 5.52817 15.5145 3.45101 19.7452 2.60948C23.9758 1.76795 28.361 2.19986 32.3462 3.85057C36.3314 5.50129 39.7376 8.29668 42.134 11.8833C44.5305 15.4698 45.8096 19.6865 45.8096 24L24 24L24 45.8096Z" fill="currentColor"></path>
+                    </svg>
+                </div>
+                <span class="font-display font-black text-xl tracking-tight hidden sm:block">McDonald's</span>
+            </div>
+            <!-- Search (Desktop) -->
+            <div class="hidden md:flex flex-1 max-w-md mx-4">
+                <div class="relative w-full">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-sub-light">
+                        <span class="material-symbols-outlined text-[20px]">search</span>
+                    </div>
+                    <input class="block w-full rounded-xl border-none bg-[#f5f0f0] dark:bg-zinc-700/50 py-2.5 pl-10 pr-3 text-sm placeholder:text-text-sub-light dark:placeholder:text-zinc-400 focus:ring-2 focus:ring-primary dark:text-white transition-all" placeholder="Search for food..." type="text"/>
+                </div>
+            </div>
+            <!-- Actions -->
+            <div class="flex items-center gap-3">
+                <button class="flex items-center justify-center size-10 rounded-full bg-[#f5f0f0] dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors relative">
+                    <span class="material-symbols-outlined text-[20px]"><a href="cart.php">shopping_cart</a></span>
+                    <span class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-card-dark">0</span>
+                </button>
+                <?php if (isLoggedIn()): ?>
+                    <a href="logout.php" class="flex items-center justify-center size-10 rounded-full bg-[#f5f0f0] dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors">
+                        <span class="material-symbols-outlined text-[20px]"><a href="logout.php">logout</a></span>
+                    </a>
+                <?php else: ?>
+                    <a href="login.php" class="flex items-center justify-center size-10 rounded-full bg-[#f5f0f0] dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">account_circle</span>
+                    </a>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="flex-grow w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-10">
+    <!-- Hero Section -->
+    <section class="rounded-xl overflow-hidden relative min-h-[400px] flex items-end p-8 md:p-12 shadow-md">
+        <div class="absolute inset-0 z-0">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-10"></div>
+<img alt="Delicious Burger Promotion" class="w-full h-full object-cover" data-alt="Juicy double cheeseburger with lettuce and tomato on a wooden board" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBtBkvOSabxCXTZ1LL20LV73LurKdQKg7dGJdneV8cAkXXcms87Ns29KnxlFCMzKL759qP80BpSlXp44G2hMKslhPCwOsrT-bBxLp8YKboeEB7oFh2Jchl9T-SlUnS6DJS0kk4ujm2XwChlyEP9Q7dcd9opCkkr0SnBJxRc_aFf7gJ1ejR3780emerSIlwWm5e7-cN0KROwlmvb-9fQHni9YrYGPmm7zO9Y22COG7chIJnVEiYmNCjnbbXWtJ7PySo_k8uaK2ztKck"/>      
+	  </div>
+        <div class="relative z-10 max-w-lg flex flex-col gap-4">
+            <span class="inline-flex items-center rounded-full bg-secondary/90 px-3 py-1 text-xs font-bold text-black backdrop-blur-sm w-fit">
+                <span class="material-symbols-outlined text-[16px] mr-1">local_fire_department</span>
+                Limited Time Offer
+            </span>
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-black text-white leading-[1.1] tracking-tight">
+                Free Big Mac® with $15 Purchase
+            </h1>
+            <p class="text-gray-200 text-lg md:text-xl font-medium max-w-md">
+                Download the app and join MyMcDonald's Rewards to get your free favorite today.
+            </p>
+            <div class="pt-2">
+                <a href="cart.php" class="bg-primary hover:bg-red-700 text-white font-bold py-3.5 px-8 rounded-full transition-transform hover:scale-105 active:scale-95 shadow-lg shadow-red-900/20 flex items-center gap-2">
+                    <span>Order Now</span>
+                    <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Category Filters -->
+    <section class="flex flex-col gap-6 sticky top-20 z-40 bg-background-light dark:bg-background-dark py-4 -mx-4 px-4 sm:mx-0 sm:px-0 transition-colors duration-200">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h2 class="text-3xl font-black tracking-tight">Our Menu</h2>
+                <p class="text-text-sub-light dark:text-zinc-400 font-medium mt-1">Fresh ingredients, made to order.</p>
+            </div>
+            <div class="flex gap-3 overflow-x-auto hide-scrollbar pb-2 md:pb-0">
+                <?php foreach (array_keys($grouped) as $i => $cat): ?>
+                    <button class="flex items-center gap-2 px-5 py-2.5 rounded-full <?= $i === 0 ? 'bg-primary text-white' : 'bg-white dark:bg-card-dark text-text-main-light dark:text-zinc-200 border border-gray-100 dark:border-zinc-700' ?> font-bold text-sm transition-all whitespace-nowrap">
+                        <span class="material-symbols-outlined text-[18px]">
+                            <?= $cat === 'Burgers' ? 'lunch_dining' : ($cat === 'Sides' ? 'fastfood' : 'local_drink') ?>
+                        </span>
+                        <?= htmlspecialchars($cat) ?>
+                    </button>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dynamic Menu Sections -->
+    <?php foreach ($grouped as $category => $items): ?>
+    <section>
+        <div class="flex items-center gap-2 mb-6">
+            <h3 class="text-2xl font-bold tracking-tight"><?= htmlspecialchars($category) ?></h3>
+            <div class="h-px bg-gray-200 dark:bg-zinc-700 flex-grow ml-4"></div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <?php foreach ($items as $item): ?>
+            <div class="group bg-white dark:bg-card-dark rounded-xl overflow-hidden border border-gray-100 dark:border-zinc-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full">
+                <div class="relative h-48 overflow-hidden bg-gray-50 dark:bg-zinc-800">
+                    <img alt="<?= htmlspecialchars($item['name']) ?>" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                         src="<?php
+                         $images = [
+                             'Big Mac' => 'https://s7d1.scene7.com/is/image/mcdonalds/mcdonalds-big-mac-1:1-3-product-tile-desktop?wid=829&hei=515&dpr=off',
+                             'French Fries' => 'https://s7d1.scene7.com/is/image/mcdonalds/mcdonalds-fries-medium:1-3-product-tile-desktop?wid=829&hei=515&dpr=off',
+                             'Coke' => 'https://s7d1.scene7.com/is/image/mcdonalds/mcdonalds-Coca-Cola-Zero-Sugar-Medium-new-updated:1-3-product-tile-desktop?wid=829&hei=515&dpr=off',
+							 
+                         ];
+                         echo $images[$item['name']] ?? 'https://via.placeholder.com/800x500?text=' . urlencode($item['name']);
+                         ?>"/>
+                    <?php if (stripos($item['name'], 'Big Mac') !== false): ?>
+                    <div class="absolute top-3 left-3 bg-secondary text-black text-xs font-bold px-2 py-1 rounded-md shadow-sm">Best Seller</div>
+                    <?php endif; ?>
+                </div>
+                <div class="p-5 flex flex-col flex-grow">
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="text-lg font-bold group-hover:text-primary transition-colors"><?= htmlspecialchars($item['name']) ?></h4>
+                        <span class="text-xs font-medium bg-gray-100 dark:bg-zinc-700 px-2 py-0.5 rounded">550 Cal</span>
+                    </div>
+                    <p class="text-sm text-text-sub-light dark:text-zinc-400 line-clamp-2 mb-4 flex-grow">
+                        <?= htmlspecialchars($item['description'] ?: 'Delicious ' . $item['name'] . ' made fresh.') ?>
+                    </p>
+                    <div class="flex items-center justify-between mt-auto pt-4 border-t border-gray-50 dark:border-zinc-700/50">
+                        <span class="text-xl font-black">$<?= number_format($item['price'], 2) ?></span>
+                        <button onclick="addToCart(<?= $item['id'] ?>, '<?= addslashes($item['name']) ?>', <?= $item['price'] ?>)" aria-label="Add to cart" class="bg-primary/10 dark:bg-zinc-700 hover:bg-primary hover:text-white text-primary dark:text-white p-2.5 rounded-full transition-all duration-300 shadow-sm">
+                            <span class="material-symbols-outlined text-[20px]">add</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+    </section>
+    <?php endforeach; ?>
+</main>
+
+<!-- Footer -->
+<footer class="bg-white dark:bg-card-dark border-t border-gray-100 dark:border-zinc-800 mt-auto">
+    <div class="max-w-[1280px] mx-auto px-4 py-8 md:flex md:items-center md:justify-between">
+        <span class="text-sm text-gray-500 dark:text-zinc-400">© 2026 McDonald's. All Rights Reserved.</span>
+    </div>
+</footer>
+
+<script src="js/cart.js"></script>
+</body>
+</html>

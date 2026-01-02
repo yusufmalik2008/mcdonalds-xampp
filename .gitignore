@@ -1,0 +1,5 @@
+node_modules/
+src/public/assets/css/output.css
+vendor/
+.docker/
+.env

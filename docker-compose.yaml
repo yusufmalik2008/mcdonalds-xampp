@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8080:80"
+    volumes:
+      - ./src/:/var/www/html
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_USER: root
+      DB_PASS: supersecretpassword
+      DB_NAME: mcd_orders
+
+  db:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: supersecretpassword
+      MYSQL_DATABASE: mcd_orders
+    ports:
+      - "3306:3306"
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./src/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./src/db/procedures.sql:/docker-entrypoint-initdb.d/02-procedures.sql
+
+volumes:
+  db-data:
