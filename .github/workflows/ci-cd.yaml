@@ -25,22 +25,22 @@ jobs:
           extensions: pdo_mysql
           coverage: none
 
-          - name: PHP Lint
+      - name: PHP Lint
         run: |
-          echo "Running PHP syntax check..."
+          echo "🔍 Checking PHP syntax in all files..."
           ERROR_FOUND=0
-          for file in $(find src -name "*.php"); do
-            php -l "$file" | grep "No syntax errors" > /dev/null || {
-              echo "::error file=$file::Syntax error in $file"
+          for file in $(find src -name "*.php" -type f); do
+            if ! php -l "$file" > /tmp/lint-output 2>&1; then
+              echo "::error file=$file::$(cat /tmp/lint-output)"
               ERROR_FOUND=1
-            }
+            fi
           done
-          if [ $ERROR_FOUND -eq 1 ]; then
-            echo "PHP syntax errors found!"
-            exit 1
+
+          if [ $ERROR_FOUND -eq 0 ]; then
+            echo "✅ All PHP files passed syntax check!"
           else
-            echo "All PHP files are syntactically correct! ✓"
-            exit 0
+            echo "❌ PHP syntax errors found!"
+            exit 1
           fi
       # ---------- Tailwind CSS Build ----------
       - name: Setup Node.js
